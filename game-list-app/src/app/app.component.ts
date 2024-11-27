@@ -23,8 +23,8 @@ export class AppComponent implements OnInit {
   getGames() {
     this.gameService.getGames().subscribe(
       (games) => {
-        this.games = games;  // Assign fetched games to games array
-        console.log('Games loaded:', games);  // Debugging output
+        this.games = games;
+        console.log('Games loaded:', games);  
       },
       (error) => {
         console.error('Error loading games:', error);  // Log if there's an error
