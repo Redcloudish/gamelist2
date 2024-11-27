@@ -1,72 +1,106 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
-interface Game {
-  id: number;
-  title: string;
-  genre: string;
-  release_year: number;
-}
+import { NgForm } from '@angular/forms';
+import { GameService } from './game.service';  // Assuming you have a GameService for API calls
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css'],
+  styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  games: Game[] = [];
-  newGame: Game = { id: 0, title: '', genre: '', release_year: 0 };
-  editGame: Game | null = null;
+  newGame: any = { title: '', genre: '', release_year: '', image: '' };
+  editGame: any = null;
+  games: any[] = [];
+  selectedFile: File | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private gameService: GameService) {}
 
-  ngOnInit(): void {
-    this.fetchGames();
+  ngOnInit() {
+    this.getGames();  // Get the list of games on component load
   }
 
-  fetchGames(): void {
-    this.http.get<Game[]>('http://localhost/api/games.php').subscribe({
-      next: (data) => (this.games = data),
-      error: (err) => console.error('Error fetching games:', err),
-    });
-  }
-
-  addGame(): void {
-    this.http.post('http://localhost/api/games.php', this.newGame).subscribe({
-      next: () => {
-        this.fetchGames();
-        this.newGame = { id: 0, title: '', genre: '', release_year: 0 };
+  // Get all games from the backend
+  getGames() {
+    this.gameService.getGames().subscribe(
+      (games) => {
+        this.games = games;  // Assign fetched games to games array
+        console.log('Games loaded:', games);  // Debugging output
       },
-      error: (err) => console.error('Error adding game:', err),
-    });
+      (error) => {
+        console.error('Error loading games:', error);  // Log if there's an error
+      }
+    );
   }
 
-  deleteGame(id: number): void {
-    this.http
-      .request('DELETE', 'http://localhost/api/games.php', { body: { id } })
-      .subscribe({
-        next: () => this.fetchGames(),
-        error: (err) => console.error('Error deleting game:', err),
-      });
-  }
+  // Add a new game
+  addGame(f: NgForm) {
+    if (f.invalid) return;
 
-  selectGameForEdit(game: Game): void {
-    this.editGame = { ...game };
-  }
-
-  updateGame(): void {
-    if (this.editGame) {
-      this.http.put('http://localhost/api/games.php', this.editGame).subscribe({
-        next: () => {
-          this.fetchGames();
-          this.editGame = null;
-        },
-        error: (err) => console.error('Error updating game:', err),
-      });
+    const formData = new FormData();
+    formData.append('title', this.newGame.title);
+    formData.append('genre', this.newGame.genre);
+    formData.append('release_year', this.newGame.release_year);
+    if (this.selectedFile) {
+      formData.append('image', this.selectedFile);
     }
+
+    this.gameService.addGame(formData).subscribe(
+      () => {
+        this.getGames();  // Refresh the list after adding a game
+        this.newGame = { title: '', genre: '', release_year: '', image: '' };  // Clear form
+      },
+      (error) => {
+        console.error('Error adding game:', error);  // Log any errors while adding a game
+      }
+    );
   }
 
-  cancelEdit(): void {
+  // Update an existing game
+  updateGame() {
+    const formData = new FormData();
+    formData.append('id', this.editGame.id);
+    formData.append('title', this.editGame.title);
+    formData.append('genre', this.editGame.genre);
+    formData.append('release_year', this.editGame.release_year);
+    if (this.selectedFile) {
+      formData.append('image', this.selectedFile);
+    }
+
+    this.gameService.updateGame(formData).subscribe(
+      () => {
+        this.getGames();  // Refresh the list after updating
+        this.editGame = null;  // Reset form
+      },
+      (error) => {
+        console.error('Error updating game:', error);  // Log any errors while updating
+      }
+    );
+  }
+
+  // File upload handler
+  onFileSelected(event: any) {
+    this.selectedFile = event.target.files[0];
+  }
+
+  // Set the game to edit mode
+  selectGameForEdit(game: any) {
+    this.editGame = { ...game };  // Pre-fill the form with the game's current values
+  }
+
+  // Cancel editing
+  cancelEdit() {
     this.editGame = null;
+  }
+
+  // Delete a game
+  deleteGame(id: number) {
+    this.gameService.deleteGame(id).subscribe(
+      () => {
+        this.getGames();  // Refresh the list after deleting
+      },
+      (error) => {
+        console.error('Error deleting game:', error);  // Log any errors while deleting
+      }
+    );
   }
 }

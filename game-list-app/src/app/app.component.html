@@ -1,70 +1,122 @@
-<div class="game-list">
-  <h1>Game List</h1>
+<div>
+  <h1>Welcome to the Game App!</h1>
 
-  <form (ngSubmit)="addGame()" *ngIf="!editGame">
-    <h2>Add Game</h2>
-    <input
-      type="text"
-      [(ngModel)]="newGame.title"
-      name="title"
-      placeholder="Title"
-      required
-    />
-    <input
-      type="text"
-      [(ngModel)]="newGame.genre"
-      name="genre"
-      placeholder="Genre"
-      required
-    />
-    <input
-      type="number"
-      [(ngModel)]="newGame.release_year"
-      name="release_year"
-      placeholder="Release Year"
-      required
-    />
-    <button type="submit">Add</button>
-  </form>
+  <!-- Add Game / Edit Game Form -->
+  <div id="gameForm" class="container">
+    <h2 *ngIf="!editGame">Add Game</h2>
+    <h2 *ngIf="editGame">Edit Game</h2>
 
-  <form (ngSubmit)="updateGame()" *ngIf="editGame">
-    <h2>Edit Game</h2>
-    <input
-      type="text"
-      [(ngModel)]="editGame.title"
-      name="title"
-      placeholder="Title"
-      required
-    />
-    <input
-      type="text"
-      [(ngModel)]="editGame.genre"
-      name="genre"
-      placeholder="Genre"
-      required
-    />
-    <input
-      type="number"
-      [(ngModel)]="editGame.release_year"
-      name="release_year"
-      placeholder="Release Year"
-      required
-    />
-    <button type="submit">Update</button>
-    <button type="button" (click)="cancelEdit()">Cancel</button>
-  </form>
+    <!-- Add Game Form -->
+    <form #f="ngForm" (ngSubmit)="editGame ? updateGame() : addGame(f)">
+      <!-- Title Input -->
+      <div class="form-group">
+        <label>Title</label>
+        <input
+          type="text"
+          class="form-control"
+          name="title"
+          [(ngModel)]="newGame.title"
+          #title="ngModel"
+          required
+        />
+        <span class="help-block danger" *ngIf="title.errors?.['required'] && title.touched">
+          The title is required
+        </span>
+      </div>
 
-  <ul *ngIf="games.length > 0; else noData">
-    <li *ngFor="let game of games">
-      <h3>{{ game.title }}</h3>
-      <p>Genre: {{ game.genre }}</p>
-      <p>Release Year: {{ game.release_year }}</p>
-      <button (click)="selectGameForEdit(game)">Edit</button>
-      <button (click)="deleteGame(game.id)">Delete</button>
-    </li>
-  </ul>
+      <!-- Genre Input -->
+      <div class="form-group">
+        <label>Genre</label>
+        <input
+          type="text"
+          class="form-control"
+          name="genre"
+          [(ngModel)]="newGame.genre"
+          #genre="ngModel"
+          required
+        />
+        <span class="help-block danger" *ngIf="genre.errors?.['required'] && genre.touched">
+          The genre is required
+        </span>
+      </div>
 
-  <ng-template #noData>
-    <p>No games found. Check your database or API connection.</p>
-  </ng-template>
+      <!-- Release Year Input -->
+      <div class="form-group">
+        <label>Release Year</label>
+        <input
+          type="number"
+          class="form-control"
+          name="release_year"
+          [(ngModel)]="newGame.release_year"
+          #releaseYear="ngModel"
+          required
+        />
+        <span class="help-block danger" *ngIf="releaseYear.errors?.['required'] && releaseYear.touched">
+          The release year is required
+        </span>
+      </div>
+
+      <!-- File Upload Input -->
+      <div class="form-group">
+        <label>Upload Image</label>
+        <input type="file" class="form-control" name="image" (change)="onFileSelected($event)" />
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm" [disabled]="f.invalid">
+        {{ editGame ? 'Update Game' : 'Add Game' }}
+      </button>
+    </form>
+  </div>
+
+  <!-- Game List -->
+  <div id="gameList" class="container">
+    <h2>Game List</h2>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div *ngFor="let game of games; let i = index" class="game-item row">
+          <div class="col-md-2">
+            <input
+              type="text"
+              [(ngModel)]="game.title"
+              class="form-control"
+              readonly
+            />
+          </div>
+          <div class="col-md-2">
+            <input
+              type="text"
+              [(ngModel)]="game.genre"
+              class="form-control"
+              readonly
+            />
+          </div>
+          <div class="col-md-2">
+            <input
+              type="number"
+              [(ngModel)]="game.release_year"
+              class="form-control"
+              readonly
+            />
+          </div>
+          <div class="col-md-2">
+            <img
+              *ngIf="game.image"
+              [src]="game.image"
+              alt="Game Image"
+              class="game-image"
+            />
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-success btn-sm" (click)="selectGameForEdit(game)">
+              Edit
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="deleteGame(game.id)">
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
